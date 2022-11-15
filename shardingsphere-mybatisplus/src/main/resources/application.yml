@@ -1,0 +1,98 @@
+server:
+  port: 8080
+
+mybatis-plus:
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    call-setters-on-nulls: true
+    jdbc-type-for-null: 'null'
+workId: 1
+dataCenterId: 1
+databaseIdBits: 2
+tableBits: 4
+
+spring:
+  shardingsphere:
+    mode:
+      type: Memory
+    props:
+      sql-show: true
+    datasource:
+      names: m0,m1
+      m0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3307/shardingsphere?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+        username: root
+        password: 123456
+      m1:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3308/shardingsphere?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+        username: root
+        password: 123456
+    rules:
+      sharding:
+        tables:
+          t_order:
+            actual-data-nodes: m$->{0..1}.t_order_$->{0..3}
+            database-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: database-sharding
+            table-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: table-sharding
+          t_order_detail:
+            actual-data-nodes: m$->{0..1}.t_order_detail_$->{0..3}
+            database-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: database-sharding
+            table-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: table-sharding
+          t_user:
+            actual-data-nodes: m$->{0..1}.t_user_$->{0..3}
+            database-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: database-sharding
+            table-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: table-sharding
+        broadcast-tables:
+          - t_config
+        binding-tables:
+          - t_order,t_order_detail
+        sharding-algorithms:
+          database-sharding:
+            type: CLASS_BASED
+            props:
+              strategy: standard
+              algorithmClassName: com.godfunc.shardingsphere.config.MyDatabasePreciseShardingAlgorithm
+          table-sharding:
+            type: CLASS_BASED
+            props:
+              strategy: standard
+              algorithmClassName: com.godfunc.shardingsphere.config.MyTablePreciseShardingAlgorithm
+      #      default-database-strategy:
+      #        inline:
+      #          sharding-column: user_id
+      #          algorithm-expression: m$->{user_id % 2}
+logging:
+  level:
+    root: info
+    org:
+      springframework:
+        web: debug
+    com:
+      godfunc: debug
